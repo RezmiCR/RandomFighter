@@ -1,0 +1,68 @@
+api-version: 1.17
+main: com.rezmicr.spigot.randomfighter.RandomFighter
+name: RandomFighter
+description: Simple wave based minigame with random items
+load: POSTWORLD
+author: "RezmiCR"
+version: 0.2
+commands:
+  joinGame:
+    description: Join to a existing room or create a new game.
+    usage: /<command> [roomName]
+    permission: randfight.joinGame
+    permission-message: You don't have permission!
+  leaveGame:
+    description: Leave the game you are currently in.
+    usage: /<command> [roomName]
+    permission: randfight.joinGame
+    permission-message: You don't have permission!
+  startGame:
+    description: Start the game, only if the user is already in the game.
+    usage: /<command> [roomName]
+    permission: randfight.startGame
+    permission-message: You don't have permission!
+  createRoom:
+    description: Create a new room, only intended for admins.
+    usage: /<command> [roomName] corner1 x y z corner2 x y z playerSpawn x y z enemySpawn x y z 
+    permission: randfight.createRoom
+    permission-message: You don't have permission!
+  deleteRoom:
+    description: Delete a existing room, only intended for admins.
+    usage: /<command> [roomName]
+    permission: randfight.deleteRoom
+    permission-message: You don't have permission!
+  listRooms:
+    description: Gives a list of all the existent rooms.
+    usage: /<command>
+    permission: randfight.listRooms
+    permission-message: You don't have permission!
+permissions:
+  randfight.joinGame:
+   description: Allows joining games command 
+   default: op
+  randfight.leaveGame:
+   description: Allows leaving games command 
+   default: op
+  randfight.startGame:
+   description: Allows starting games command 
+   default: op
+  randfight.createRoom:
+   description: Allows creating game rooms command
+   default: op
+  randfight.deleteRoom:
+   description: Allows deleting game rooms command
+   default: op
+  randfight.listRooms:
+   description: Allows listing game rooms command
+   default: op
+  randfight.*:
+   description: Wildcard permission
+   default: op
+   children:
+     randfight.joinGame: true
+     randfight.leaveGame: true
+     randfight.startGame: true
+     randfight.createRoom: true
+     randfight.deleteRoom: true
+     randfight.listRooms: true
+
