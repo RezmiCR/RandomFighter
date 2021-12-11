@@ -18,6 +18,8 @@ import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.GameMode;
 import org.bukkit.Bukkit;
+import org.bukkit.scheduler.BukkitRunnable;
+
 
 public class RandFightMinigame {
     // Fields
@@ -66,15 +68,29 @@ public class RandFightMinigame {
         if (players.contains(player)) {
             players.remove(player);
             player.removeScoreboardTag("random_fighter");
-            player.setGameMode(Bukkit.getDefaultGameMode());    // TODO: test this
+            player.setGameMode(Bukkit.getDefaultGameMode());
             player.getInventory().clear();
             player.getInventory().setContents(this.inventories.remove(player));
-            player.teleport(ogLocations.remove(player));
+            player.teleport(this.ogLocations.remove(player));
         }
     }
 
     public void removePlayers(int sec) {
-        BukkitTask task = new RemovePlayers(players,ogLocations,inventories).runTaskLater(this.plugin,20*sec);
+        BukkitTask task = new RemovePlayers(this).runTaskLater(this.plugin,20*sec);
+    }
+    public void clearStuff() {
+        Iterator<Player> itPlayers = this.players.iterator();
+        while (itPlayers.hasNext()) {
+            Player player = (Player) itPlayers.next();
+            player.removeScoreboardTag("random_fighter");
+            player.setGameMode(Bukkit.getDefaultGameMode());
+            player.getInventory().clear();
+            player.getInventory().setContents(this.inventories.remove(player));
+            player.teleport(this.ogLocations.remove(player));
+        }
+        players = null;
+        this.room.resetBlocks();
+        System.err.println("AAAAAAAAAAA");
     }
     
     private void deleteEntities(List<Entity> entities, int sec) {
@@ -118,6 +134,20 @@ public class RandFightMinigame {
         ItemStack[] newInv = Arrays.copyOf(ogInv,ogInv.length);
         //new ItemStack(player.getInventory().getContents()); // please stay there
         return newInv;
+    }
+}
+
+class RemovePlayers extends BukkitRunnable {
+
+    RandFightMinigame minigame;
+
+    public RemovePlayers(RandFightMinigame minigame) {
+        this.minigame = minigame;
+    }
+
+    @Override
+    public void run() {
+        this.minigame.clearStuff();
     }
 }
 

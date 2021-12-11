@@ -114,11 +114,9 @@ public class GameCommands {
                                              Double.parseDouble(args[10]), 
                                              Double.parseDouble(args[11]), 
                                              Double.parseDouble(args[12]));
-                GameRoom tempRoom = new GameRoom(args[0],
-                                                 loc1,
-                                                 loc2,
-                                                 loc3,
-                                                 loc4);
+                GameRoom tempRoom = new GameRoom(args[0],loc1,loc2,
+                                                         loc3,loc4);
+                this.rooms.put(args[0],tempRoom);       // FIXME: A
                 // code to store room in DB
                 Connection con = connections.get(connections.size()-1);
                 Statement statement = con.createStatement();

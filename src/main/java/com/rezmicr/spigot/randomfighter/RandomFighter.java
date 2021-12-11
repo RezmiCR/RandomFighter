@@ -1,6 +1,7 @@
 package com.rezmicr.spigot.randomfighter;
 
 import java.util.*;
+import java.io.File;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -22,10 +23,12 @@ public class RandomFighter extends JavaPlugin {
     protected List<Connection> connections = new ArrayList<Connection>(); 
     protected GameCommands cmdMgr;
     protected Map<String,GameRoom> rooms;
-    private final String DB = "jdbc:sqlite:D:/EditServer/plugins/TestPlugin/testdatabase.db";
+    private final String DB = "jdbc:sqlite:plugins/RandomFighter/randfight.db";
     @Override
     public void onEnable() {
         getServer().getPluginManager().registerEvents(new RandFightEvents(this), this);
+        // check if the RandomFighter folder exists
+        new File("plugins/RandomFighter").mkdirs();
         // create a connection pool
         try {
             for (int i = 0; i < 10; i++) {

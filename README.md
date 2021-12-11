@@ -1,31 +1,30 @@
 # RandomFighter
 Minigame plugin for Minecraft Spigot Servers, tested in version 1.17.1
 
-Writen in Java 16 using the Spigot API and storing data using SQLite and the SQLite-JDBC driver,
+Written in Java 16 using the Spigot API and storing data using SQLite and the SQLite-JDBC driver,
 mainly done for fun and learning purposes, I haven't included a license yet so standard GitHub 
 rules apply to the licensing.
 
 ## Compiling
 ### IDE
 As this was created only using Maven it's really easy to integrate into any IDE or fancy setup that
-you like, therefore *if you use an IDE just load the project for Maven and the `pom.xml` should
-configure almost everything.*
+you like, therefore ***if you use an IDE just load the project for Maven and the `pom.xml` should
+configure almost everything.***
 
 ### CLI
 Using Maven just set yourself at the root of the project (where the `pom.xml` is located)
 
-For compiling `.java` files into `.class` files use
+For compiling individual `.java` files into bytecode files, use
 ```bash
 mvn compile
 ```
 
-For packaging into a `.jar` use
+For packaging into a `.jar` at the `target\` folder, use
 ```bash
 mvn assembly:single
 ```
-This will generate the package in the `target\` folder.
 
-Fore cleaning the process, use
+For cleaning both compiling and packaging process, use
 ```bash
 mvn clean
 ```
@@ -51,11 +50,11 @@ while I was searching for information.
 
 ## Tasks
 ### TODO:
-- [ ] Save the starting room geometry, replace it back at the end of the game **
 - [ ] Custom lootTables for the enemies **
 - [ ] Make more item special habilities *
 - [ ] Configure the waves with different enemies *
-- [ ] Balance amount of enemies per wave according to players in game *
+- [ ] Amount of enemies per wave according to players in game *
+- [ ] Create a /updateroom [roomName] command
 - [ ] Figure out the sqlite file placement
 - [ ] Manage DB connections, nothing fancy yet
 
@@ -69,6 +68,7 @@ while I was searching for information.
 - [x] Change gamemode to adventure and set back to default
 - [x] Teleport back on death (tag random_fighter)
 - [x] Change the way /listrooms works
+- [x] Save the starting room geometry, replace it back at the end of the game
 
 ### TODO-IF-RELEASED:
 I don't intend to release this, but if I were to do it, here are some things that need to be taken
