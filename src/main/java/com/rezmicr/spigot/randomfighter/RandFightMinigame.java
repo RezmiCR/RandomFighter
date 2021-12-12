@@ -90,7 +90,6 @@ public class RandFightMinigame {
         }
         players = null;
         this.room.resetBlocks();
-        System.err.println("AAAAAAAAAAA");
     }
     
     private void deleteEntities(List<Entity> entities, int sec) {
@@ -110,12 +109,15 @@ public class RandFightMinigame {
 
         // FIXME: this is an awful solution/hack
         // but I just wanted to get this running
-        enemies = spawnEntities(EntityType.CHICKEN,2,this.room,enemies,10);
-        deleteEntities(enemies,40);
-        enemies = spawnEntities(EntityType.PIG,4,this.room,enemies,50);
-        deleteEntities(enemies,80);
+        enemies = spawnEntities(EntityType.CHICKEN,4,this.room,enemies,5);
+        deleteEntities(enemies,25);
+        enemies = spawnEntities(EntityType.ZOMBIE_HORSE,1,this.room,enemies,30);
+        deleteEntities(enemies,50);
+        enemies = spawnEntities(EntityType.ZOMBIE,4,this.room,enemies,55);
+        deleteEntities(enemies,75);
+
         // remove players at the end
-        removePlayers(90);    // or should I make them leave?
+        removePlayers(80);    // or should I make them leave?
             
     }
     }

@@ -59,8 +59,11 @@ public class GameCommands {
                         "running, wait or join another room");
                 }
             }
-        } else { sender.sendMessage("The room "+args[0]+" doesn't exist"); }
-        return true; } return false;
+        } else {
+            sender.sendMessage("The room "+args[0]+" doesn't exist");
+        }
+        return true;
+    } return false;
     } else if (cmd.getName().equalsIgnoreCase("startGame")) {
         if (args.length == 1) {
             if (games.get(args[0]) != null) {
@@ -70,7 +73,7 @@ public class GameCommands {
                     // game loop starts
                     game.startGame();
                     // FIXME: Another consequence of the awful waves hack, ... too bad
-                    deleteGame(args[0],100);
+                    deleteGame(args[0],85);
                 } else {
                     sender.sendMessage("Couldn't start that game, wrong room maybe?");
                 }
@@ -139,6 +142,7 @@ public class GameCommands {
             return true;
         }
         return false;
+    /*
     } else if (cmd.getName().equalsIgnoreCase("deleteRoom")) {
         // TODO: implement deleteroom command
         if (args.length == 1) {
@@ -147,6 +151,7 @@ public class GameCommands {
             return true;
         }
         return false;
+    */
     } else if (cmd.getName().equalsIgnoreCase("listRooms")) {
         if (args.length == 0) {
         if (rooms.size() > 0) {
@@ -157,9 +162,22 @@ public class GameCommands {
         }
         return true;
         }
+    } else if (cmd.getName().equalsIgnoreCase("updateRoom")) {
+        // \ updateroom [roomname]
+        if (!(args.length == 1)) return false;
+        // get room from list
+        GameRoom room = this.rooms.get(args[0]);
+        if (room != null) {
+            room.updateRoom();
+            sender.sendMessage("Updated the room " + args[0]);
+        } else {
+            sender.sendMessage("There is no room " + args[0]);
+        }
+        return true;
     }
     return false; 
-}
+    }
+//}
     public void deleteGame(String roomName,int sec) {
         BukkitTask task = new DeleteGame(this.games,roomName).runTaskLater(this.plugin,20*sec);
     }

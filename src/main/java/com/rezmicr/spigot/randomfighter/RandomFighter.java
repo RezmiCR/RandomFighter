@@ -14,19 +14,20 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 import org.bukkit.World;
 import org.bukkit.Location;
 
 public class RandomFighter extends JavaPlugin {
-    // Fields
-    protected Map<String, RandFightMinigame> games = new HashMap<String, RandFightMinigame>();
-    protected List<Connection> connections = new ArrayList<Connection>(); 
-    protected GameCommands cmdMgr;
-    protected Map<String,GameRoom> rooms;
+    private final Map<String, RandFightMinigame> games = new HashMap<String, RandFightMinigame>();
+    private final List<Connection> connections = new ArrayList<Connection>(); 
+    private GameCommands cmdMgr;
+    private RFScoreBoard scoreBoard;
+    private Map<String,GameRoom> rooms;
     private final String DB = "jdbc:sqlite:plugins/RandomFighter/randfight.db";
+
     @Override
     public void onEnable() {
-        getServer().getPluginManager().registerEvents(new RandFightEvents(this), this);
         // check if the RandomFighter folder exists
         new File("plugins/RandomFighter").mkdirs();
         // create a connection pool
@@ -37,6 +38,19 @@ public class RandomFighter extends JavaPlugin {
             getLogger().info("Created DB connections pool");
             Connection con = connections.get(connections.size()-1);            
             cmdMgr = new GameCommands(games,connections,loadRooms(con),this); 
+            connections.remove(con);
+            con = connections.get(connections.size()-1);            
+            scoreBoard = new RFScoreBoard(con,this); // create scoreboard
+            connections.remove(con);
+            /***************************
+             * This could be a method */     // This is only for the reloads, but this isn't tested
+            Object[] onlinePlayers = Bukkit.getOnlinePlayers().toArray();
+            for (int i = 0; i < onlinePlayers.length - 1; i++) {
+                // Uh... IDK why It couldn't cast to Player[] as stated in the docs
+                ((Player) onlinePlayers[i]).setScoreboard(scoreBoard.getScoreboard());
+            }
+            /**************************/
+            getServer().getPluginManager().registerEvents(new RandFightEvents(this), this);
         } catch(SQLException e) {
             // if the error message is "out of memory" it probably means no database file is found
             System.err.println(e.getMessage());
@@ -44,12 +58,21 @@ public class RandomFighter extends JavaPlugin {
     }
     @Override
     public void onDisable() {
+        Connection con = connections.get(connections.size()-1);
+        scoreBoard.saveToDB(con,this);
+        connections.remove(con);
+        getLogger().info("Saved points to DB");
         getLogger().info("Thanks for trying my plugin!");
     }
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
         return cmdMgr.runCommand(sender, cmd, label, args);
     }
+
+    public RFScoreBoard getScoreBoard() {
+        return scoreBoard;
+    }
+
     private Map<String,GameRoom> loadRooms(Connection con) {
         Map<String,GameRoom> DBRooms = new HashMap<String, GameRoom>();
         try {
@@ -101,7 +124,7 @@ public class RandomFighter extends JavaPlugin {
         return DBRooms;
     }
     // TODO: clean this, for the love of god
-    boolean tableExists(Connection connection, String tableName) throws SQLException {
+    private boolean tableExists(Connection connection, String tableName) throws SQLException {
         DatabaseMetaData meta = connection.getMetaData();
         ResultSet resultSet = meta.getTables(null, null, tableName, new String[] {"TABLE"});
         return resultSet.next();

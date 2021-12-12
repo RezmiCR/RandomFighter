@@ -8,7 +8,7 @@ import org.bukkit.block.Block;
 import org.bukkit.Material;
 
 public class GameRoom {
-    // Fields
+
     private final String roomName;
     private final Location enemySpawn;
     private final Location playerSpawn;
@@ -26,6 +26,10 @@ public class GameRoom {
         this.corner1 = corner1;
         this.corner2 = corner2;
         this.ogBlocks = new LasagnaGeometry(this.corner1,this.corner2);
+    }
+    public void updateRoom() {
+        this.ogBlocks.clearGeometry();
+        this.ogBlocks.saveGeometry();
     }
     public void resetBlocks() {
         this.ogBlocks.resetRoom();
@@ -64,29 +68,18 @@ class BlocksSheet {
 }
 
 class LasagnaGeometry {
+
     private Location startX, endX, startY, endY, startZ, endZ; 
-    private final List<BlocksSheet> sheets = new ArrayList<BlocksSheet>();;
+    private final List<BlocksSheet> sheets = new ArrayList<BlocksSheet>();
+
     public LasagnaGeometry(Location corner1, Location corner2) {
-        // code to run everything
         this.startY = (corner1.getBlockY() < corner2.getBlockY()) ? corner1 : corner2; 
         this.endY = (corner1.getBlockY() < corner2.getBlockY()) ? corner2 : corner1; 
         this.startX = (corner1.getBlockX() < corner2.getBlockX()) ? corner1 : corner2; 
         this.endX = (corner1.getBlockX() < corner2.getBlockX()) ? corner2 : corner1; 
         this.startZ = (corner1.getBlockZ() < corner2.getBlockZ()) ? corner1 : corner2; 
         this.endZ = (corner1.getBlockZ() < corner2.getBlockZ()) ? corner2 : corner1; 
-        for (double j = startY.getBlockY(); j < endY.getBlockY(); j++) {
-            // add each sheet
-            BlocksSheet sheet = new BlocksSheet();
-            for (double i = this.startX.getBlockX(); i < this.endX.getBlockX(); i++) {
-                // add each noodle
-                BlocksNoodle noodle = new BlocksNoodle();
-                for (double k = this.startZ.getBlockZ(); k < this.endZ.getBlockZ(); k++) {
-                    // add each material
-                    Location blockLoc = new Location(this.startX.getWorld(),i,j,k);
-                    noodle.add(blockLoc.getBlock()); 
-                } sheet.add(noodle);
-            } this.sheets.add(sheet);
-        }
+        saveGeometry();        
     }
     public void resetRoom() {
         int distY = this.endY.getBlockY() - this.startY.getBlockY();
@@ -105,6 +98,27 @@ class LasagnaGeometry {
                     block.getBlock().setType(mat);
                 }
             }
+        }
+    }
+
+    public void clearGeometry() {
+        sheets.clear();
+    }
+
+    public void saveGeometry() {
+        // code to run everything
+        for (double j = startY.getBlockY(); j < endY.getBlockY(); j++) {
+            // add each sheet
+            BlocksSheet sheet = new BlocksSheet();
+            for (double i = this.startX.getBlockX(); i < this.endX.getBlockX(); i++) {
+                // add each noodle
+                BlocksNoodle noodle = new BlocksNoodle();
+                for (double k = this.startZ.getBlockZ(); k < this.endZ.getBlockZ(); k++) {
+                    // add each material
+                    Location blockLoc = new Location(this.startX.getWorld(),i,j,k);
+                    noodle.add(blockLoc.getBlock()); 
+                } sheet.add(noodle);
+            } this.sheets.add(sheet);
         }
     }
 }
