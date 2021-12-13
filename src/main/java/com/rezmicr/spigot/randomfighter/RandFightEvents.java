@@ -21,6 +21,7 @@ import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.EntityType;
+import org.bukkit.event.entity.SlimeSplitEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.Location;
 import org.bukkit.potion.PotionEffectType;
@@ -35,6 +36,7 @@ public class RandFightEvents implements Listener {
     private final Map<Player,Location> deathLocs = new HashMap<Player,Location>();
     private final List<Material> itemPool = new ArrayList<Material>();
     private final Random gen = new Random();
+    private final RandomTypes randTypes;
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
@@ -49,16 +51,19 @@ public class RandFightEvents implements Listener {
         }
     }
 
-    public RandFightEvents(RandomFighter plugin) {
+    public RandFightEvents(RandomFighter plugin, RandomTypes randTypes) {
         this.plugin = plugin;
-        // could be loaded from a YAML file, but I'll just hard code it for now
-        this.itemPool.add(Material.IRON_HELMET);
-        this.itemPool.add(Material.IRON_CHESTPLATE);
-        this.itemPool.add(Material.IRON_LEGGINGS);
-        this.itemPool.add(Material.IRON_BOOTS);
+        this.randTypes = randTypes;
     }
 
-    //newSpawn.addScoreboardTag("random_enemy");
+    @EventHandler
+    public void onSlimeSplit(SlimeSplitEvent event) {
+        LivingEntity entity = event.getEntity();
+        if (!entity.getScoreboardTags().contains("random_enemy")) 
+            return;
+        event.setCancelled(true);
+    }
+
     @EventHandler
     public void onEntityDeath(EntityDeathEvent event) {
         LivingEntity entity = event.getEntity();
@@ -66,27 +71,32 @@ public class RandFightEvents implements Listener {
         event.setDroppedExp(0);        
         // Adds to scoreboard
         Player killer = entity.getKiller();
-        if (killer != null) this.plugin.getScoreBoard().updatePlayer(killer);
+        if (killer != null) {
+        switch (entity.getType()) {
+            case RAVAGER:
+                this.plugin.getScoreBoard().updatePlayer(killer,10);
+                killer.sendMessage("10 points kill");
+                break;
+            case VINDICATOR:
+                this.plugin.getScoreBoard().updatePlayer(killer,2);
+                killer.sendMessage("2 points kill");
+                break;
+            default:
+                this.plugin.getScoreBoard().updatePlayer(killer);
+                killer.sendMessage("1 point kill");
+        }
+        }
         EntityType type = entity.getType();
         List<ItemStack> items = event.getDrops();
         items.clear();
         // define special items to always drop for some specific creatures
         switch (type) {
             case CHICKEN:
-                items.add(new ItemStack(Material.STONE_PICKAXE));
-                break;
-            case ZOMBIE_HORSE:
-                items.add(new ItemStack(Material.CLOCK));
-                break;
-            case WITHER_SKELETON:
-                items.add(new ItemStack(Material.SEA_LANTERN));
+                items.add(new ItemStack(Material.GOLDEN_CARROT,6));
                 break;
         }
-        // food for them bugaloos
-        items.add(new ItemStack(Material.GOLDEN_CARROT));
         // add a random item from a pre defined pool
-        items.add(new ItemStack(itemPool.get(gen.nextInt(itemPool.size()))));
-        // TODO: implement a probabilty, not just random
+        items.add(new ItemStack(randTypes.randItem(),gen.nextInt(2)));
     }
 
     @EventHandler

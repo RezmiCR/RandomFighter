@@ -1,5 +1,6 @@
 package com.rezmicr.spigot.randomfighter;
 
+// TODO: only include used packages
 import java.util.*;
 
 import java.sql.Connection;
@@ -20,45 +21,88 @@ import org.bukkit.GameMode;
 import org.bukkit.Bukkit;
 import org.bukkit.scheduler.BukkitRunnable;
 
-
 public class RandFightMinigame {
-    // Fields
+
     private GameRoom room;
     private boolean running = false;
     private List<Player> players = new ArrayList<Player>();
     private List<Entity> enemies = new ArrayList<Entity>();
-    // FIXME: these could be merged into one, but that's not my problem rn
     private Map<Player,ItemStack[]> inventories = new HashMap<Player,ItemStack[]>();
     private Map<Player,Location> ogLocations = new HashMap<Player,Location>();
-    private Connection con;
     private RandomFighter plugin;
+    // TODO: implement this values as plugin config file instead of hardcodding
+    private final int SpawnT = 5;
+    private final int WaveT = 20;
+    private int waves;
 
-    public RandFightMinigame(GameRoom room, Player player, Connection con, RandomFighter plugin) {
+    public RandFightMinigame(GameRoom room, Player player, RandomFighter plugin) {
         this.room = room;
         this.addPlayer(player);
-        this.con = con;
         this.plugin = plugin;
     }
 
-    private boolean saveData() {
-        // DB store data
+    // run logic of the game
+    public void startGame(Player host, int waves, RandomTypes randType) {
+    this.waves = waves;
+    running = true;
+    List<Entity> enemies = new ArrayList<Entity>();
+    // An easy start
+    messageToAll("The game was started!");
+    enemies = spawnEntities(EntityType.CHICKEN,players.size(),this,enemies,SpawnT);
+    deleteEntities(enemies,WaveT+SpawnT);
+    // A random middle
+    for (int wave = 2; wave < waves; wave++) {
+        int midSpawnT = (WaveT+SpawnT)*wave-WaveT;
+        int midWaveT = (WaveT+SpawnT)*wave;
+        if (wave < 10) {
+            enemies = spawnEntities(randType.randEntity(),players.size()*2,this,enemies,midSpawnT);
+        } else if (wave < 15) {
+            enemies = spawnEntities(randType.randEntity(),players.size()*3,this,enemies,midSpawnT);
+        } else if (wave < 20) {
+            enemies = spawnEntities(randType.randEntity(),players.size()*4,this,enemies,midSpawnT);
+        } else {
+            enemies = spawnEntities(randType.randEntity(),players.size()*5,this,enemies,midSpawnT);
+        }
+        deleteEntities(enemies,midWaveT);
+    }
+    // A hard ending
+    enemies = spawnEntities(EntityType.RAVAGER,players.size()-1,this,enemies,(WaveT+SpawnT)*waves-WaveT);
+    deleteEntities(enemies,(WaveT+SpawnT)*(waves+3));
+
+    // remove players at the end
+    removePlayers((WaveT+SpawnT)*(waves+3)+SpawnT*2);
+    }
+
+    public int getDeleteTime() {
+        return (WaveT+SpawnT)*(waves+2)+SpawnT*2;
+    }
+
+    public boolean canStart(Player host) {
+        if (!running && players.contains(host)) return true;
         return false;
     }
 
     public void addPlayer(Player player) {
+        if (running) {
+            player.sendMessage("Game already running, can't join");
+            return;
+        }
         if (!players.contains(player)) {
             // general info for keeping control
             players.add(player);
             player.addScoreboardTag("random_fighter");
             // change to adventure mode
             player.setGameMode(GameMode.ADVENTURE);
-            // swap inventory for a clean one
-            ItemStack[] oldInv = copyPlayerInv(player.getInventory().getContents());
-            inventories.put(player,oldInv);
-            player.getInventory().clear();
             // save location and then realocate
             ogLocations.put(player,player.getLocation());
+            // swap inventory for a clean one if it's in the same world 
+            if (player.getLocation().getWorld() == this.room.getPlayerSpawn().getWorld()) {
+                ItemStack[] oldInv = copyPlayerInv(player.getInventory().getContents());
+                inventories.put(player,oldInv);
+                player.getInventory().clear();
+            }
             player.teleport(room.getPlayerSpawn());
+            player.sendMessage("You joined to the room");
         } else {
             player.sendMessage("You already joined this game!");
         }
@@ -70,14 +114,16 @@ public class RandFightMinigame {
             player.removeScoreboardTag("random_fighter");
             player.setGameMode(Bukkit.getDefaultGameMode());
             player.getInventory().clear();
-            player.getInventory().setContents(this.inventories.remove(player));
+            if (this.inventories.containsKey(player))
+                player.getInventory().setContents(this.inventories.remove(player));
             player.teleport(this.ogLocations.remove(player));
         }
     }
 
-    public void removePlayers(int sec) {
+    private void removePlayers(int sec) {
         BukkitTask task = new RemovePlayers(this).runTaskLater(this.plugin,20*sec);
     }
+
     public void clearStuff() {
         Iterator<Player> itPlayers = this.players.iterator();
         while (itPlayers.hasNext()) {
@@ -85,7 +131,8 @@ public class RandFightMinigame {
             player.removeScoreboardTag("random_fighter");
             player.setGameMode(Bukkit.getDefaultGameMode());
             player.getInventory().clear();
-            player.getInventory().setContents(this.inventories.remove(player));
+            if (this.inventories.containsKey(player))
+                player.getInventory().setContents(this.inventories.remove(player));
             player.teleport(this.ogLocations.remove(player));
         }
         players = null;
@@ -96,45 +143,27 @@ public class RandFightMinigame {
         BukkitTask task = new KillCreatures(entities).runTaskLater(this.plugin,20*sec);
     }
 
-    private List<Entity> spawnEntities(EntityType type,int amount,GameRoom room,List<Entity> entities,int sec) {
-        BukkitTask task = new SpawnEntities(type,amount,room,entities).runTaskLater(this.plugin,20*sec);
+    public void messageToAll(String message) {
+        for (Player receiver : players) {
+            receiver.sendMessage(message);
+        }
+    }
+
+    private List<Entity> spawnEntities(EntityType type,int amount,RandFightMinigame game,List<Entity> entities,int sec) {
+        BukkitTask task = new SpawnEntities(type,amount,game,entities).runTaskLater(this.plugin,20*sec);
         return entities;
     }
 
-    public void startGame() {
-    if (!running) {
-        this.running = true;
-        List<Entity> enemies = new ArrayList<Entity>();
-        // run logic of the game
-
-        // FIXME: this is an awful solution/hack
-        // but I just wanted to get this running
-        enemies = spawnEntities(EntityType.CHICKEN,4,this.room,enemies,5);
-        deleteEntities(enemies,25);
-        enemies = spawnEntities(EntityType.ZOMBIE_HORSE,1,this.room,enemies,30);
-        deleteEntities(enemies,50);
-        enemies = spawnEntities(EntityType.ZOMBIE,4,this.room,enemies,55);
-        deleteEntities(enemies,75);
-
-        // remove players at the end
-        removePlayers(80);    // or should I make them leave?
-            
-    }
-    }
-    public boolean isRunning() {
-        return running;
-    }
     public GameRoom getRoom() {
         return room;
     }
+
     public List<Player> getPlayers() {
         return players;
     }
-    // TODO: implement this
+
     private ItemStack[] copyPlayerInv(ItemStack[] ogInv) {
-        // foreach in ogInv
         ItemStack[] newInv = Arrays.copyOf(ogInv,ogInv.length);
-        //new ItemStack(player.getInventory().getContents()); // please stay there
         return newInv;
     }
 }

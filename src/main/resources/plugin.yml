@@ -18,7 +18,7 @@ commands:
     permission-message: You don't have permission!
   startGame:
     description: Start the game, only if the user is already in the game.
-    usage: /<command> [roomname]
+    usage: /<command> [roomname] [waves|none]
     permission: randfight.startGame
     permission-message: You don't have permission!
   createRoom:

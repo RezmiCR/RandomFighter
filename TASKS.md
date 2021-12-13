@@ -1,9 +1,12 @@
 # Tasks
 ## TODO:
-- [ ] Amount of enemies per wave according to players in game
-- [ ] Automatically divide time for waves
+- [ ] General values tweaking for balancing
+- [ ] Clear spawn place
 - [ ] Make more item special habilities
 - [ ] Manage DB connections, nothing fancy yet
+- [ ] Reset scores command /resetscores [playername]|[all]
+- [ ] Prevent SQL injections (prepared statements)
+- [ ] Implement /deleteroom
 
 ## DONE:
 - [x] Commands to create a room by given coordinates
@@ -21,14 +24,21 @@
 - [x] Create a /updateroom [roomname] command
 - [x] Configure the waves with different enemies
 - [x] Custom scoreboard for competition
+- [x] Amount of enemies per wave according to players in game
+- [x] Automatically divide time for waves
+- [x] Only clear inv if the player is in the same world as the room
+- [x] Wave messages (and game start message)
+- [x] Implement weight based spawn system
+- [x] Don't let minigame slimes split
+- [x] Implement weight based item system
+- [x] Make it so mobs can't pick up items
 
 ## TODO-IF-RELEASED:
 I don't intend to release this, but if I were to do it, here are some things that need to be taken
-into consideration.
-- [ ] Prevent SQL injections (prepared statements)
+into consideration, in case someone else wants to fix my mistakes.
+- [ ] YAML config file for waves, enemies, loot, special items...
 - [ ] Make a comprehensive but quick guide of usage
 - [ ] Manage DB connections in a smart way
-- [ ] Use custom LootTables for the enemies (It'd have to be implemented at API)
-- [ ] Implement /deleteroom
+- [ ] Custom LootTables for the enemies (Bukkit API has no tools for this)
 - [ ] Handle correctly onDisable while games are running
 - [ ] Clean task management for waves and each gameloop

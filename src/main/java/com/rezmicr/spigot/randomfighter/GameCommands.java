@@ -19,20 +19,22 @@ import org.bukkit.scheduler.BukkitTask;
 
 public class GameCommands {
 
-    protected Map<String, RandFightMinigame> games;
+    private final Map<String, RandFightMinigame> games;
     // TODO: auto manager class for the connections pool
     // smartly repopulate the connections once they are running out
-    protected List<Connection> connections = new ArrayList<Connection>(); 
-    protected Map<String, GameRoom> rooms;
-    protected RandomFighter plugin;
+    private List<Connection> connections; 
+    private Map<String, GameRoom> rooms;
+    private RandomFighter plugin;
+    private RandomTypes randTypes;
 
     public GameCommands(Map<String, RandFightMinigame> games,
                         List<Connection> connections,
-                        Map<String,GameRoom> rooms, RandomFighter plugin) {
+                        Map<String,GameRoom> rooms, RandomFighter plugin, RandomTypes randTypes) {
         this.rooms = rooms;
         this.games = games;
         this.connections = connections;
         this.plugin = plugin;
+        this.randTypes = randTypes;
     }
 
     public boolean runCommand(CommandSender sender, Command cmd,
@@ -43,21 +45,11 @@ public class GameCommands {
         if (rooms.containsKey(args[0])) {
             if (games.get(args[0]) == null) {
                 World world = ((Player) sender).getWorld();
-                Connection con = connections.get(connections.size()-1);
                 games.put(args[0],new RandFightMinigame(rooms.get(args[0]),
-                            (Player) sender, con, this.plugin));
-                connections.remove(con);
-                sender.sendMessage("You joined to the room");
+                            (Player) sender, this.plugin));
             } else {
                 RandFightMinigame game = games.get(args[0]);
-                // check if the game is already running
-                if (!game.isRunning()) {
-                    game.addPlayer((Player) sender);
-                    sender.sendMessage("You joined to the room");
-                } else {
-                    sender.sendMessage("That game is already "+
-                        "running, wait or join another room");
-                }
+                game.addPlayer((Player) sender);
             }
         } else {
             sender.sendMessage("The room "+args[0]+" doesn't exist");
@@ -65,24 +57,28 @@ public class GameCommands {
         return true;
     } return false;
     } else if (cmd.getName().equalsIgnoreCase("startGame")) {
-        if (args.length == 1) {
-            if (games.get(args[0]) != null) {
-                RandFightMinigame game = games.get(args[0]);
-                if (!game.isRunning() && game.getPlayers().contains((Player) sender)) {
-                    sender.sendMessage("You started the game, good luck!");
-                    // game loop starts
-                    game.startGame();
-                    // FIXME: Another consequence of the awful waves hack, ... too bad
-                    deleteGame(args[0],85);
-                } else {
-                    sender.sendMessage("Couldn't start that game, wrong room maybe?");
-                }
-            } else {
-                sender.sendMessage("There is no game in that room, use /joingame [roomname]");
-            }
+        if (args.length < 1 || args.length > 2)
+            return false; // incorrect amount of args
+
+        if (games.get(args[0]) == null) {
+            sender.sendMessage("There is no game in that room, use /joingame [roomname]");
             return true;
         }
-        return false;
+
+        RandFightMinigame game = games.get(args[0]);
+        if (!game.canStart((Player) sender)) {
+            sender.sendMessage("You can't start that game");
+            return true;
+        }
+        switch (args.length) {
+            case 1:
+                game.startGame((Player) sender,5,randTypes);
+                break;
+            case 2:
+                game.startGame((Player) sender,Integer.parseInt(args[1]),randTypes);
+        }
+        deleteGame(args[0],game.getDeleteTime());
+        return true;
     } else if (cmd.getName().equalsIgnoreCase("leaveGame")) {
         if (args.length == 1) {
             if (games.get(args[0]) != null) {

@@ -22,46 +22,38 @@ public class RandomFighter extends JavaPlugin {
     private final Map<String, RandFightMinigame> games = new HashMap<String, RandFightMinigame>();
     private final List<Connection> connections = new ArrayList<Connection>(); 
     private GameCommands cmdMgr;
+    private RandomTypes randTypes;
     private RFScoreBoard scoreBoard;
     private Map<String,GameRoom> rooms;
     private final String DB = "jdbc:sqlite:plugins/RandomFighter/randfight.db";
 
     @Override
     public void onEnable() {
-        // check if the RandomFighter folder exists
+        // create RandomFighter folder if it doesn't exist
         new File("plugins/RandomFighter").mkdirs();
         // create a connection pool
         try {
-            for (int i = 0; i < 10; i++) {
+            for (int i = 0; i < 10; i++)
                 connections.add(DriverManager.getConnection(DB));
-            }
             getLogger().info("Created DB connections pool");
-            Connection con = connections.get(connections.size()-1);            
-            cmdMgr = new GameCommands(games,connections,loadRooms(con),this); 
-            connections.remove(con);
-            con = connections.get(connections.size()-1);            
-            scoreBoard = new RFScoreBoard(con,this); // create scoreboard
-            connections.remove(con);
-            /***************************
-             * This could be a method */     // This is only for the reloads, but this isn't tested
-            Object[] onlinePlayers = Bukkit.getOnlinePlayers().toArray();
-            for (int i = 0; i < onlinePlayers.length - 1; i++) {
-                // Uh... IDK why It couldn't cast to Player[] as stated in the docs
-                ((Player) onlinePlayers[i]).setScoreboard(scoreBoard.getScoreboard());
-            }
-            /**************************/
-            getServer().getPluginManager().registerEvents(new RandFightEvents(this), this);
         } catch(SQLException e) {
-            // if the error message is "out of memory" it probably means no database file is found
             System.err.println(e.getMessage());
         }
+        Connection con = connections.get(connections.size()-1);            
+        randTypes = new RandomTypes();
+        cmdMgr = new GameCommands(games,connections,loadRooms(con),this,randTypes); 
+        connections.remove(con);
+        con = connections.get(connections.size()-1);            
+        scoreBoard = new RFScoreBoard(con,this); // create scoreboard
+        connections.remove(con);
+        scoreboardAllPlayers(); // adds scoreboard in case of plugin reload
+        getServer().getPluginManager().registerEvents(new RandFightEvents(this, randTypes), this);
     }
     @Override
     public void onDisable() {
         Connection con = connections.get(connections.size()-1);
         scoreBoard.saveToDB(con,this);
         connections.remove(con);
-        getLogger().info("Saved points to DB");
         getLogger().info("Thanks for trying my plugin!");
     }
     @Override
@@ -123,6 +115,14 @@ public class RandomFighter extends JavaPlugin {
         }
         return DBRooms;
     }
+
+    private void scoreboardAllPlayers() {
+        Object[] onlinePlayers = Bukkit.getOnlinePlayers().toArray();
+        for (int i = 0; i < onlinePlayers.length - 1; i++) {
+            ((Player) onlinePlayers[i]).setScoreboard(scoreBoard.getScoreboard());
+        }
+    }
+
     // TODO: clean this, for the love of god
     private boolean tableExists(Connection connection, String tableName) throws SQLException {
         DatabaseMetaData meta = connection.getMetaData();
