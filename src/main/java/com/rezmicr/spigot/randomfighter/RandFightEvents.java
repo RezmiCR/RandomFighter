@@ -15,10 +15,13 @@ import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
 
 import org.bukkit.block.Block;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Mob;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.event.entity.SlimeSplitEvent;
@@ -37,6 +40,7 @@ public class RandFightEvents implements Listener {
     private final List<Material> itemPool = new ArrayList<Material>();
     private final Random gen = new Random();
     private final RandomTypes randTypes;
+    private final Material[] chickenStuff = new Material[]{Material.STONE_PICKAXE,Material.SHIELD,Material.STONE_SWORD};
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
@@ -46,8 +50,14 @@ public class RandFightEvents implements Listener {
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
         Player player = event.getPlayer();
-        if (player.getInventory().getItemInMainHand().getType() == Material.FISHING_ROD) {
-            player.getWorld().strikeLightning(player.getTargetBlock((Set<Material>) null, 200).getLocation());
+        ItemStack itemInHand = player.getInventory().getItemInMainHand(); 
+        switch (itemInHand.getType()) {
+            case FISHING_ROD:
+                player.getWorld().strikeLightning(player.getTargetBlock((Set<Material>) null, 200).getLocation());
+                break;
+            case SPYGLASS:
+                player.teleport(player.getTargetBlock(null, 20).getLocation());
+                break;
         }
     }
 
@@ -85,41 +95,71 @@ public class RandFightEvents implements Listener {
                 this.plugin.getScoreBoard().updatePlayer(killer);
                 killer.sendMessage("1 point kill");
         }
+        } else {
+            List<Entity> near = entity.getNearbyEntities(10,10,10);
+            for (Entity e : near) {
+                if (e.getScoreboardTags().contains("random_player")) {
+                    killer.sendMessage("1 point shared kill");
+                    this.plugin.getScoreBoard().updatePlayer((Player) e);
+                }
+            }
         }
         EntityType type = entity.getType();
         List<ItemStack> items = event.getDrops();
         items.clear();
         // define special items to always drop for some specific creatures
-        switch (type) {
-            case CHICKEN:
-                items.add(new ItemStack(Material.GOLDEN_CARROT,6));
-                break;
+        if (type == EntityType.CHICKEN) {
+                items.add(new ItemStack(chickenStuff[gen.nextInt(2)],1));
+                items.add(new ItemStack(randTypes.randItem(),1));
         }
         // add a random item from a pre defined pool
-        items.add(new ItemStack(randTypes.randItem(),gen.nextInt(2)));
+        items.add(new ItemStack(randTypes.randItem(),1));
     }
 
     @EventHandler
     public void onEntityDamaged(EntityDamageByEntityEvent event) {
         if (event.getDamager() instanceof Player) {
         Player player = (Player) event.getDamager();
+        PotionEffect effect;
         // Verify if the player is currently in a game
         if (player.getScoreboardTags().contains("random_fighter")) {
             Location loc = (Location) player.getLocation();
             loc.setY(loc.getY() - 1);
             Block bloke = (Block) loc.getBlock();
             // Different effects based on the weapon used
-            if (player.getInventory().getItemInMainHand().getType() == Material.STONE_PICKAXE) {
-                bloke.setType(Material.STONE);
-            } else if (player.getInventory().getItemInMainHand().getType() == Material.BUCKET) {
-                bloke.setType(Material.WATER);
-            } else if (player.getInventory().getItemInMainHand().getType() == Material.FEATHER) {
-                PotionEffect effect = new PotionEffect(PotionEffectType.LEVITATION,10*20,1);
-                effect.apply((LivingEntity) event.getEntity());
+            Material itemInHand = player.getInventory().getItemInMainHand().getType();
+            switch (itemInHand) {
+                case STONE_PICKAXE:
+                    if (bloke.getType() != Material.BARRIER || bloke.getType() != Material.BEDROCK)
+                        bloke.setType(Material.STONE);
+                    break;
+                case BUCKET:
+                    if (bloke.getType() != Material.BARRIER || bloke.getType() != Material.BEDROCK)
+                        bloke.setType(Material.WATER);
+                    break;
+                case FEATHER:
+                    effect = new PotionEffect(PotionEffectType.LEVITATION,10*20,1);
+                    effect.apply((LivingEntity) event.getEntity());
+                    break;
+                case POISONOUS_POTATO:
+                    Mob damagee = ((Mob) event.getEntity());
+                    effect = new PotionEffect(PotionEffectType.POISON,10*20,1);
+                    damagee.setHealth(2);
+                    effect.apply(damagee);
+                    player.getInventory().getItemInMainHand().setType(Material.BAKED_POTATO);
+                    break;
+                case CLOCK:
+                    effect = new PotionEffect(PotionEffectType.SLOW,10*20,1);
+                    effect.apply((LivingEntity) event.getEntity());
+                    break;
+                case SEA_LANTERN:
+                    effect = new PotionEffect(PotionEffectType.GLOWING,10*20,1);
+                    effect.apply((LivingEntity) event.getEntity());
             }
         }
         }
     }
+
     @EventHandler
     public void onPlayerDeath(PlayerDeathEvent event) {
     Player player = event.getEntity();
@@ -128,6 +168,7 @@ public class RandFightEvents implements Listener {
         this.deathLocs.put(player,location);
     }
     }
+
     @EventHandler
     public void onPlayerRespawn(PlayerRespawnEvent event) {
     Player player = event.getPlayer();
