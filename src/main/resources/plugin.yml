@@ -1,5 +1,5 @@
 api-version: 1.17
-depend: [Multiverse-Core]
+softdepend: [Multiverse-Core]
 main: com.rezmicr.spigot.randomfighter.RandomFighter
 name: RandomFighter
 description: Simple wave based minigame with random items

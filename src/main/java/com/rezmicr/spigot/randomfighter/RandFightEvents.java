@@ -98,7 +98,7 @@ public class RandFightEvents implements Listener {
         } else {
             List<Entity> near = entity.getNearbyEntities(10,10,10);
             for (Entity e : near) {
-                if (e.getScoreboardTags().contains("random_player")) {
+                if (e.getScoreboardTags().contains("random_fighter")) {
                     killer.sendMessage("1 point shared kill");
                     this.plugin.getScoreBoard().updatePlayer((Player) e);
                 }
@@ -142,7 +142,7 @@ public class RandFightEvents implements Listener {
                     effect.apply((LivingEntity) event.getEntity());
                     break;
                 case POISONOUS_POTATO:
-                    Mob damagee = ((Mob) event.getEntity());
+                    LivingEntity damagee = ((LivingEntity) event.getEntity());
                     effect = new PotionEffect(PotionEffectType.POISON,10*20,1);
                     damagee.setHealth(2);
                     effect.apply(damagee);

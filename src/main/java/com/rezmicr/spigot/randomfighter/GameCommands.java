@@ -41,15 +41,21 @@ public class GameCommands {
                               String label, String[] args) {
     if (cmd.getName().equalsIgnoreCase("joinGame")) {
     if (args.length > 0) {
-        // create a game or join the player to an active game
+        // check if the room exists at all
         if (rooms.containsKey(args[0])) {
-            if (games.get(args[0]) == null) {
-                World world = ((Player) sender).getWorld();
-                games.put(args[0],new RandFightMinigame(rooms.get(args[0]),
-                            (Player) sender, this.plugin));
+            // check if the player is already tagged as random_fighter
+            if (!((Player) sender).getScoreboardTags().contains("random_fighter")) {
+                // check if the game is already started
+                if (games.get(args[0]) == null) {
+                    World world = ((Player) sender).getWorld();
+                    games.put(args[0],new RandFightMinigame(rooms.get(args[0]),
+                                (Player) sender, this.plugin));
+                } else {
+                    RandFightMinigame game = games.get(args[0]);
+                    game.addPlayer((Player) sender);
+                }
             } else {
-                RandFightMinigame game = games.get(args[0]);
-                game.addPlayer((Player) sender);
+                sender.sendMessage("You can't join multiple games at the same time");
             }
         } else {
             sender.sendMessage("The room "+args[0]+" doesn't exist");
@@ -82,11 +88,14 @@ public class GameCommands {
     } else if (cmd.getName().equalsIgnoreCase("leaveGame")) {
         if (args.length == 1) {
             if (games.get(args[0]) != null) {
-                games.get(args[0]).removePlayer((Player) sender);
-                sender.sendMessage("You left the room " + args[0]);
+                if (games.get(args[0]).getPlayers().contains((Player) sender)) {
+                    games.get(args[0]).removePlayer((Player) sender);
+                    sender.sendMessage("You left the room");
+                } else {
+                    sender.sendMessage("You aren't in that game room!");
+                }
             } else {
                 sender.sendMessage("There are "+games.size()+" games");
-                sender.sendMessage("You aren't in that game room!");
             }
             return true;
         }
