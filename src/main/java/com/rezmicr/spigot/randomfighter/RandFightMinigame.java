@@ -1,13 +1,6 @@
 package com.rezmicr.spigot.randomfighter;
 
-// TODO: only include used packages
 import java.util.*;
-
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
 
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Entity;
@@ -30,7 +23,7 @@ public class RandFightMinigame {
     private Map<Player,ItemStack[]> inventories = new HashMap<Player,ItemStack[]>();
     private Map<Player,Location> ogLocations = new HashMap<Player,Location>();
     private RandomFighter plugin;
-    // TODO: implement this values as plugin config file instead of hardcodding
+    // TODO: implement these values as plugin config file instead of hardcodding
     private final int SpawnT = 5;
     private final int WaveT = 20;
     private int waves;

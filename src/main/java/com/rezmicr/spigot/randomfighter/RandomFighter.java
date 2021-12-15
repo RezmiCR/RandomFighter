@@ -7,7 +7,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.PreparedStatement;
 import java.sql.DatabaseMetaData;
 
 import org.bukkit.plugin.java.JavaPlugin;
@@ -68,36 +68,41 @@ public class RandomFighter extends JavaPlugin {
     private Map<String,GameRoom> loadRooms(Connection con) {
         Map<String,GameRoom> DBRooms = new HashMap<String, GameRoom>();
         try {
-        // load em up
-        Statement statement = con.createStatement();
-        statement.setQueryTimeout(30);  // set timeout to 30 sec.
+        // Creates the ROOMS table if it doesn't exist
         if (!tableExists(con, "ROOMS")) {
-            statement.executeUpdate("CREATE TABLE ROOMS (NAME,XCORNER1,"+ 
-                                    "YCORNER1,ZCORNER1,XCORNER2,YCORNER2,"+
-                                    "ZCORNER2,PLAYSPNWX,PLAYSPNWY,PLAYSPNWZ,"+
-                                    "ENMSPNWX,ENMSPNWY,ENMSPNWZ,WRLDNAME)");
+            String createString = "CREATE TABLE ROOMS (NAME,XCORNER1,"+ 
+                                  "YCORNER1,ZCORNER1,XCORNER2,YCORNER2,"+
+                                  "ZCORNER2,PLAYSPNWX,PLAYSPNWY,PLAYSPNWZ,"+
+                                  "ENMSPNWX,ENMSPNWY,ENMSPNWZ,WRLDNAME)";
+            PreparedStatement createTable = con.prepareStatement(createString);
+            createTable.executeUpdate();
+        // Reads the ROOMS table and creates the room objects
         } else {
-            ResultSet rs = statement.executeQuery("SELECT * FROM ROOMS");
+            String selectString = "SELECT * FROM ROOMS";
+            PreparedStatement selectTable = con.prepareStatement(selectString);
+            ResultSet rs = selectTable.executeQuery();
             while(rs.next()) {
-                // read the result set
+                // Using the worldname as UUID method failed sometimes
+                // However, if the world is managed by another plugin like 
+                // Multiverse-Core, those plugins will have to be softdepent
                 World world = Bukkit.getWorld(rs.getString("WRLDNAME"));
                 if (world != null) {
                 Location loc1 = new Location(world,
-                    Double.parseDouble(rs.getString("XCORNER1")),
-                    Double.parseDouble(rs.getString("YCORNER1")),
-                    Double.parseDouble(rs.getString("ZCORNER1")));
+                    rs.getDouble("XCORNER1"),
+                    rs.getDouble("YCORNER1"),
+                    rs.getDouble("ZCORNER1"));
                 Location loc2 = new Location(world,
-                    Double.parseDouble(rs.getString("XCORNER2")),
-                    Double.parseDouble(rs.getString("YCORNER2")),
-                    Double.parseDouble(rs.getString("ZCORNER2")));                
+                    rs.getDouble("XCORNER2"),
+                    rs.getDouble("YCORNER2"),
+                    rs.getDouble("ZCORNER2"));                
                 Location loc3 = new Location(world,
-                    Double.parseDouble(rs.getString("PLAYSPNWX")),
-                    Double.parseDouble(rs.getString("PLAYSPNWY")),
-                    Double.parseDouble(rs.getString("PLAYSPNWZ")));
+                    rs.getDouble("PLAYSPNWX"),
+                    rs.getDouble("PLAYSPNWY"),
+                    rs.getDouble("PLAYSPNWZ"));
                 Location loc4 = new Location(world,
-                    Double.parseDouble(rs.getString("ENMSPNWX")),
-                    Double.parseDouble(rs.getString("ENMSPNWY")),
-                    Double.parseDouble(rs.getString("ENMSPNWZ")));
+                    rs.getDouble("ENMSPNWX"),
+                    rs.getDouble("ENMSPNWY"),
+                    rs.getDouble("ENMSPNWZ"));
                 GameRoom tempRoom = new GameRoom(rs.getString("NAME"),loc1,loc2,loc3,loc4);
                 DBRooms.put(rs.getString("NAME"),tempRoom);
                 } else {
@@ -105,11 +110,11 @@ public class RandomFighter extends JavaPlugin {
                 }
             }
             getLogger().info("Loaded existing rooms");
+            // TODO: manage connections more intelligently
             con.close();
             connections.remove(con);   
         }
         } catch(SQLException e) {
-            // if the error message is "out of memory" it probably means no database file is found
             System.err.println(e.getMessage());
             DBRooms = new HashMap<String,GameRoom>();
         }
@@ -123,11 +128,10 @@ public class RandomFighter extends JavaPlugin {
         }
     }
 
-    // TODO: clean this, for the love of god
-    private boolean tableExists(Connection connection, String tableName) throws SQLException {
-        DatabaseMetaData meta = connection.getMetaData();
-        ResultSet resultSet = meta.getTables(null, null, tableName, new String[] {"TABLE"});
-        return resultSet.next();
+    private boolean tableExists(Connection con, String name) throws SQLException {
+        DatabaseMetaData meta = con.getMetaData();
+        ResultSet rs = meta.getTables(null, null, name, new String[] {"TABLE"});
+        return rs.next();
     }
 }
 

@@ -99,7 +99,7 @@ public class RandFightEvents implements Listener {
             List<Entity> near = entity.getNearbyEntities(10,10,10);
             for (Entity e : near) {
                 if (e.getScoreboardTags().contains("random_fighter")) {
-                    killer.sendMessage("1 point shared kill");
+                    e.sendMessage("1 point shared kill");
                     this.plugin.getScoreBoard().updatePlayer((Player) e);
                 }
             }

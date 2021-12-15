@@ -1,12 +1,9 @@
 # Tasks
 ## TODO:
-- [ ] General values tweaking for balancing
 - [ ] Clear spawn place
-- [ ] Make more item special habilities
-- [ ] Manage DB connections, nothing fancy yet
-- [ ] Reset scores command /resetscores [playername]|[all]
-- [ ] Prevent SQL injections (prepared statements)
-- [ ] Implement /deleteroom
+- [ ] Manage DB connections, nothing fancy
+- [ ] Implement /resetscores [playername]|[all]
+- [ ] Implement /deleterooms [roomname]|[all]
 
 ## DONE:
 - [x] Commands to create a room by given coordinates
@@ -32,6 +29,9 @@
 - [x] Don't let minigame slimes split
 - [x] Implement weight based item system
 - [x] Make it so mobs can't pick up items
+- [x] General values tweaking for balancing
+- [x] Make more item special habilities
+- [x] Use prepared statements
 
 ## TODO-IF-RELEASED:
 I don't intend to release this, but if I were to do it, here are some things that need to be taken

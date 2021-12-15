@@ -1,12 +1,13 @@
 package com.rezmicr.spigot.randomfighter;
 
 import java.util.*;
+import java.lang.Double;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.PreparedStatement;
 
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -103,8 +104,14 @@ public class GameCommands {
     } else if (cmd.getName().equalsIgnoreCase("createRoom")) {
         // \createroom roomName corner1 corner2 playerSpawn enemySpawn
         if (args.length == 13) {
-            try {
-                // code to create GameRoom instance
+            String insertString = "INSERT INTO ROOMS VALUES(?,"+ // roomName
+                                "?,?,?,"+                      // corner1
+                                "?,?,?,"+                      // corner2
+                                "?,?,?,"+                      // playerSpawn
+                                "?,?,?)";                      // enemySpawn
+            Connection con = connections.get(connections.size()-1);
+            try (PreparedStatement insertRoom = con.prepareStatement(insertString)) {
+                // Create GameRoom instance
                 World world = ((Player) sender).getWorld();
                 Location loc1 = new Location(world, 
                                              Double.parseDouble(args[1]), 
@@ -124,19 +131,23 @@ public class GameCommands {
                                              Double.parseDouble(args[12]));
                 GameRoom tempRoom = new GameRoom(args[0],loc1,loc2,
                                                          loc3,loc4);
-                this.rooms.put(args[0],tempRoom);       // FIXME: A
-                // code to store room in DB
-                Connection con = connections.get(connections.size()-1);
-                Statement statement = con.createStatement();
-                statement.setQueryTimeout(30);  // set timeout to 30 sec.
-                statement.executeUpdate("INSERT INTO ROOMS VALUES('"+args[0]+
-                                            "','"+args[1]+"','"+args[2]+
-                                            "','"+args[3]+"','"+args[4]+
-                                            "','"+args[5]+"','"+args[6]+
-                                            "','"+args[7]+"','"+args[8]+
-                                            "','"+args[9]+"','"+args[10]+
-                                            "','"+args[11]+"','"+args[12]+
-                                            "','"+world.getName()+"')");
+                this.rooms.put(args[0],tempRoom);
+                // Store room in DB
+                insertRoom.setString(1,args[0]);
+                insertRoom.setDouble(2,Double.parseDouble(args[1]));
+                insertRoom.setDouble(3,Double.parseDouble(args[2]));
+                insertRoom.setDouble(4,Double.parseDouble(args[3]));
+                insertRoom.setDouble(5,Double.parseDouble(args[4]));
+                insertRoom.setDouble(6,Double.parseDouble(args[5]));
+                insertRoom.setDouble(7,Double.parseDouble(args[6]));
+                insertRoom.setDouble(8,Double.parseDouble(args[7]));
+                insertRoom.setDouble(9,Double.parseDouble(args[8]));
+                insertRoom.setDouble(10,Double.parseDouble(args[9]));
+                insertRoom.setDouble(11,Double.parseDouble(args[10]));
+                insertRoom.setDouble(12,Double.parseDouble(args[11]));
+                insertRoom.setDouble(13,Double.parseDouble(args[12]));
+                insertRoom.setString(14,world.getName());
+                insertRoom.executeUpdate();
                 con.close();
                 connections.remove(con);
                 sender.sendMessage("Succesfully created the room " + args[0]);
